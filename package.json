@@ -1,7 +1,7 @@
 {
   "name": "magpie-codearts",
-  "version": "0.1.1",
-  "description": "Use Huawei Cloud CodeArts' models in magpie — sign in with the CodeArts CLI's own login, chat through its OpenAI-compatible endpoint.",
+  "version": "0.2.0",
+  "description": "CodeArts for magpie, both ways: use Huawei Cloud CodeArts' models in magpie, and drive the CodeArts CLI on magpie's models from the Agents page.",
   "type": "module",
   "main": "index.mjs",
   "exports": {
@@ -9,6 +9,7 @@
   },
   "files": [
     "index.mjs",
+    "codearts.agent.js",
     "README.md"
   ],
   "keywords": [
@@ -26,6 +27,7 @@
   "author": "liu-zhengdong",
   "license": "MIT",
   "magpie": {
-    "icon": "https://codearts.huaweicloud.com/favicon.ico"
+    "icon": "https://codearts.huaweicloud.com/favicon.ico",
+    "agent": "./codearts.agent.js"
   }
 }

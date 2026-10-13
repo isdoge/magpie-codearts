@@ -387,6 +387,14 @@ export async function CodeArtsPlugin({ client }) {
         ...was,
         models: { ...STATIC_MODELS, ...(was.models ?? {}) },
       }
+      // this file is also the plugin this package's own agent module
+      // (codearts.agent.js) points CodeArts at, to wire the CLI onto
+      // magpie's models: CodeArts recomputes enabled_providers — the
+      // whitelist its providers must be on — at every start and drops
+      // what the config file said, so "magpie" is put back here
+      if (Array.isArray(cfg.enabled_providers) && !cfg.enabled_providers.includes("magpie")) {
+        cfg.enabled_providers = [...cfg.enabled_providers, "magpie"]
+      }
     },
     provider: {
       id: PROVIDER,
@@ -475,5 +483,8 @@ export async function CodeArtsPlugin({ client }) {
   }
 }
 
-// for tests
-export const _internal = { sign, canonicalQuery, canonicalURI, hwUrlEncode, exchangeCode, pollTicket, refreshTokens, currentUser, fetchModels, credsOf, entry, chatHeaders, MODELS }
+// for tests — a function, not an object: CodeArts calls every export of a
+// plugin file, and one that isn't callable silently disables the whole file
+export function _internal() {
+  return { sign, canonicalQuery, canonicalURI, hwUrlEncode, exchangeCode, pollTicket, refreshTokens, currentUser, fetchModels, credsOf, entry, chatHeaders, MODELS }
+}

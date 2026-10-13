@@ -41,12 +41,12 @@ const DEFAULT_AGENT = "a8bcb36232554267a5142361cc25a393"
 // CodeArts' models before the account's own list is read. The keys are
 // what the chat endpoint takes in `model`; the names are what CodeArts
 // shows — the CLI's own table, drawn from the same fetch this plugin
-// makes, names them this way.
+// makes, names them this way. All of them think.
 const MODELS = [
-  { key: "GLM-5.2", name: "GLM-5.2", context: 202752, input: 196608, output: 131072 },
-  { key: "glm-5.2-sft-harmony", name: "GLM-5.2-ArkTS-SPARK", context: 202752, input: 196608, output: 131072 },
-  { key: "openpangu-2.0-pro", name: "OpenPangu-2.0-Pro", context: 524288, input: 512000, output: 131072 },
-  { key: "openpangu-2.0-flash", name: "OpenPangu-2.0-Flash", context: 524288, input: 512000, output: 131072 },
+  { key: "GLM-5.2", name: "GLM-5.2", context: 202752, input: 196608, output: 131072, reasoning: true },
+  { key: "glm-5.2-sft-harmony", name: "GLM-5.2-ArkTS-SPARK", context: 202752, input: 196608, output: 131072, reasoning: true },
+  { key: "openpangu-2.0-pro", name: "OpenPangu-2.0-Pro", context: 524288, input: 512000, output: 131072, reasoning: true },
+  { key: "openpangu-2.0-flash", name: "OpenPangu-2.0-Flash", context: 524288, input: 512000, output: 131072, reasoning: true },
 ]
 
 const STATUS_TEXT = { 400: "Bad Request", 401: "Unauthorized", 403: "Forbidden", 404: "Not Found", 405: "Method Not Allowed",
@@ -319,21 +319,25 @@ const STATIC_MODELS = Object.fromEntries(MODELS.map((m) => [m.key, entry(m)]))
 // useragents pick the account's agent, its detail names its models.
 async function fetchModels(creds) {
   const listEnv = await callCodearts(`${USERAGENTS}?offset=0&limit=100`, { agentType: "AgentCenter", creds })
-  const list = listEnv?.data?.agents ?? listEnv?.data?.list ?? (Array.isArray(listEnv?.data) ? listEnv.data : [])
+  // both answers carry their payload at the top level: {total, agents} and
+  // the agent's own record, no wrapping data field
+  const list = listEnv?.agents ?? []
   const pick = list.find((a) => a && (a.agent_id === DEFAULT_AGENT || a.original_id === DEFAULT_AGENT)) ?? list.find((a) => a?.agent_id)
   const detail = await callCodearts(`${AGENT_DETAIL}?agent_id=${encodeURIComponent(pick?.agent_id ?? DEFAULT_AGENT)}`, { agentType: "AgentCenter", creds })
-  const ms = detail?.data?.gpts?.models ?? []
+  const ms = detail?.gpts?.models ?? []
   const out = []
   for (const m of ms) {
     const p = m?.model_parameters
     if (!p?.model_id) continue
     out.push({
       key: p.model_id,
-      name: m.model_name || p.model_id,
+      name: m.model_name || m.model_alias || p.model_id,
       context: Number(p.context_window) || 0,
       input: Number(p.input_length) || 0,
       output: Number(p.max_tokens) || 131072,
-      reasoning: /think/i.test(String(p.thinking_type ?? "")),
+      // the vendor's list leaves thinking_type null, but its API streams a
+      // reasoning_content for every model of it, GLM and pangu alike
+      reasoning: true,
     })
   }
   return out

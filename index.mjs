@@ -309,7 +309,7 @@ const entry = (m) => ({
   tool_call: true,
   attachment: false,
   modalities: { input: ["text"], output: ["text"] },
-  limit: { context: m.context || 0, output: m.output || 0 },
+  limit: { context: m.context || 0, input: m.input || 0, output: m.output || 0 },
   cost: { input: 0, output: 0, cache_read: 0, cache_write: 0 },
 })
 
